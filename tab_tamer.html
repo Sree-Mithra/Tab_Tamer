@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tab Tamer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e10;
+    --surface: #18181b;
+    --surface2: #222226;
+    --surface3: #2c2c31;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0f0f0;
+    --muted: #888;
+    --accent: #b4ff6e;
+    --accent-dim: rgba(180,255,110,0.12);
+    --accent-dim2: rgba(180,255,110,0.22);
+    --danger: #ff5b5b;
+    --danger-dim: rgba(255,91,91,0.12);
+    --warn: #ffb55b;
+    --warn-dim: rgba(255,181,91,0.12);
+    --blue: #6eb5ff;
+    --blue-dim: rgba(110,181,255,0.12);
+    --purple: #c07aff;
+    --purple-dim: rgba(192,122,255,0.12);
+  }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    background: rgba(14,14,16,0.95);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--accent);
+  }
+
+  .logo span { color: var(--text); }
+
+  .tab-counter {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    background: var(--accent-dim);
+    color: var(--accent);
+    padding: 3px 10px;
+    border-radius: 100px;
+    border: 1px solid rgba(180,255,110,0.25);
+  }
+
+  .tab-counter.danger {
+    background: var(--danger-dim);
+    color: var(--danger);
+    border-color: rgba(255,91,91,0.25);
+  }
+
+  header .actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.01em;
+  }
+
+  .btn:hover { background: var(--surface3); color: var(--text); border-color: var(--border2); }
+
+  .btn.primary {
+    background: var(--accent);
+    color: #0e0e10;
+    border-color: var(--accent);
+  }
+
+  .btn.primary:hover { background: #c8ff8a; }
+
+  .btn.danger-btn {
+    color: var(--danger);
+    border-color: rgba(255,91,91,0.3);
+  }
+
+  .btn.danger-btn:hover { background: var(--danger-dim); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    flex: 1;
+    min-height: 0;
+  }
+
+  aside {
+    border-right: 1px solid var(--border);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow-y: auto;
+  }
+
+  .sidebar-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.5rem 0.25rem;
+  }
+
+  .group-item {
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.12s;
+    border: 1px solid transparent;
+  }
+
+  .group-item:hover { background: var(--surface2); }
+
+  .group-item.active {
+    background: var(--accent-dim);
+    border-color: rgba(180,255,110,0.2);
+  }
+
+  .group-item .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .group-item .g-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .group-item.active .g-name { color: var(--accent); }
+
+  .group-item .g-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  .add-group-btn {
+    margin-top: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    border: 1px dashed var(--border2);
+    background: transparent;
+    width: 100%;
+    font-family: 'Syne', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .add-group-btn:hover { color: var(--accent); border-color: rgba(180,255,110,0.3); background: var(--accent-dim); }
+
+  main {
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .search-wrap {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.4;
+  }
+
+  .search-input {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 9px 12px 9px 36px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
+
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-card .val {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .stat-card .lbl {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .tabs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+  }
+
+  .tab-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.15s;
+    position: relative;
+    cursor: pointer;
+    animation: fadeIn 0.2s ease both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .tab-card:hover {
+    border-color: var(--border2);
+    background: var(--surface2);
+  }
+
+  .tab-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .tab-card .favicon {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: var(--surface3);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .tab-card .tab-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tab-card .tab-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tab-card .tab-url {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tab-card .tab-meta {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 100px;
+    letter-spacing: 0.02em;
+  }
+
+  .tag.age-old { background: var(--warn-dim); color: var(--warn); }
+  .tag.age-new { background: var(--blue-dim); color: var(--blue); }
+  .tag.pinned { background: var(--purple-dim); color: var(--purple); }
+  .tag.group-tag { background: var(--accent-dim2); color: var(--accent); }
+
+  .tab-card .close-btn {
+    opacity: 0;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1;
+    transition: all 0.1s;
+    flex-shrink: 0;
+  }
+
+  .tab-card:hover .close-btn { opacity: 1; }
+  .tab-card .close-btn:hover { color: var(--danger); background: var(--danger-dim); }
+
+  .tab-card .select-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1.5px solid var(--border2);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.12s;
+  }
+
+  .tab-card.selected .select-check {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .tab-card.selected .select-check::after {
+    content: '✓';
+    font-size: 10px;
+    color: #0e0e10;
+    font-weight: 800;
+  }
+
+  .bulk-bar {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index: 200;
+    animation: slideUp 0.2s ease both;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  .bulk-bar .sel-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--accent);
+    min-width: 70px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+  }
+
+  .empty-state .emoji { font-size: 3rem; margin-bottom: 1rem; }
+  .empty-state h3 { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
+  .empty-state p { font-size: 0.85rem; line-height: 1.6; }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 18px;
+    padding: 1.75rem;
+    width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: fadeIn 0.2s ease both;
+  }
+
+  .modal h3 { font-size: 1.1rem; font-weight: 700; }
+
+  .modal input, .modal select {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text);
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+
+  .modal input:focus, .modal select:focus { border-color: var(--accent); }
+
+  .color-picker-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .color-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.12s;
+    border: 2px solid transparent;
+  }
+
+  .color-dot:hover { transform: scale(1.2); }
+  .color-dot.selected-color { border-color: white; transform: scale(1.15); }
+
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0.25rem 0;
+  }
+
+  .group-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.25rem;
+  }
+
+  .group-header .dot-lg {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .group-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .group-header .g-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    z-index: 400;
+    animation: slideRight 0.25s ease both;
+  }
+
+  @keyframes slideRight {
+    from { opacity: 0; transform: translateX(16px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .toast.success { color: var(--accent); border-color: rgba(180,255,110,0.3); }
+  .toast.info { color: var(--blue); border-color: rgba(110,181,255,0.3); }
+
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .filter-chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 100px;
+    cursor: pointer;
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--muted);
+    transition: all 0.12s;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .filter-chip:hover { color: var(--text); border-color: var(--border2); background: var(--surface2); }
+  .filter-chip.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(180,255,110,0.3); }
+
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; }
+    aside { display: none; }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Tab<span>Tamer</span></div>
+  <div id="headerCounter" class="tab-counter">0 tabs</div>
+  <div class="actions">
+    <button class="btn" onclick="importSample()">Load sample tabs</button>
+    <button class="btn" onclick="openAddTabModal()">+ Add tab</button>
+    <button class="btn primary" onclick="openGroupModal(null)">+ New group</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside id="sidebar">
+    <div class="sidebar-label">Groups</div>
+    <div class="group-item active" data-group="all" onclick="selectGroup('all')">
+      <div class="dot" style="background:#b4ff6e"></div>
+      <span class="g-name">All Tabs</span>
+      <span class="g-count" id="allCount">0</span>
+    </div>
+    <div class="group-item" data-group="ungrouped" onclick="selectGroup('ungrouped')">
+      <div class="dot" style="background:#888"></div>
+      <span class="g-name">Ungrouped</span>
+      <span class="g-count" id="ungroupedCount">0</span>
+    </div>
+    <div class="divider"></div>
+    <div class="sidebar-label">Your Groups</div>
+    <div id="groupList"></div>
+    <button class="add-group-btn" onclick="openGroupModal(null)">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      New group
+    </button>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <input type="text" class="search-input" placeholder="Search tabs..." id="searchInput" oninput="render()">
+      </div>
+      <div class="filter-row" id="filterRow">
+        <button class="filter-chip active" data-filter="all" onclick="setFilter('all')">All</button>
+        <button class="filter-chip" data-filter="old" onclick="setFilter('old')">Old tabs</button>
+        <button class="filter-chip" data-filter="new" onclick="setFilter('new')">Recent</button>
+        <button class="filter-chip" data-filter="pinned" onclick="setFilter('pinned')">Pinned</button>
+      </div>
+    </div>
+
+    <div class="stats-bar" id="statsBar"></div>
+
+    <div id="mainContent"></div>
+  </main>
+</div>
+
+<div id="bulkBar" style="display:none" class="bulk-bar">
+  <span class="sel-count" id="selCount">0 selected</span>
+  <button class="btn" onclick="bulkGroup()">Move to group ↗</button>
+  <button class="btn" onclick="bulkPin()">Pin</button>
+  <button class="btn danger-btn" onclick="bulkClose()">Close tabs</button>
+  <button class="btn" onclick="clearSelection()">Cancel</button>
+</div>
+
+<div id="modalBackdrop" class="modal-backdrop" style="display:none" onclick="closeModal(event)">
+  <div class="modal" id="modalBox" onclick="event.stopPropagation()"></div>
+</div>
+
+<div id="toast" class="toast" style="display:none"></div>
+
+<script>
+const COLORS = ['#b4ff6e','#6eb5ff','#ff5b5b','#c07aff','#ffb55b','#5bffcc','#ff6eb4','#ffe05b'];
+const FAVICONS = {'google.com':'G','youtube.com':'YT','github.com':'GH','twitter.com':'X','reddit.com':'Re','notion.so':'N','figma.com':'Fi','linear.app':'L','docs.google.com':'GD','stackoverflow.com':'SO','medium.com':'M','dev.to':'DV','openai.com':'AI','anthropic.com':'An','vercel.app':'Ve','localhost':'LH'};
+
+let tabs = [];
+let groups = [];
+let selectedTabs = new Set();
+let currentGroup = 'all';
+let currentFilter = 'all';
+let tabIdCounter = 1;
+let groupIdCounter = 1;
+let toastTimer = null;
+
+function now() { return Date.now(); }
+
+function domainOf(url) {
+  try {
+    const h = new URL(url.startsWith('http') ? url : 'https://'+url).hostname.replace('www.','');
+    return h;
+  } catch { return url; }
+}
+
+function faviconLetter(url) {
+  const d = domainOf(url);
+  for (const [k,v] of Object.entries(FAVICONS)) { if (d.includes(k)) return v; }
+  return d[0]?.toUpperCase() || '?';
+}
+
+function faviconColor(url) {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const l = faviconLetter(url);
+  const idx = letters.indexOf(l[0]) % COLORS.length;
+  return COLORS[Math.max(0, idx)];
+}
+
+function ageLabel(ts) {
+  const mins = (now() - ts) / 60000;
+  if (mins < 60) return Math.floor(mins) + 'm';
+  if (mins < 1440) return Math.floor(mins/60) + 'h';
+  return Math.floor(mins/1440) + 'd';
+}
+
+function isOld(ts) { return (now() - ts) > 24*60*60*1000 * 3; }
+function isNew(ts) { return (now() - ts) < 60*60*1000; }
+
+function importSample() {
+  const sample = [
+    {title:'GitHub — Your Projects', url:'https://github.com/your-org/project', pinned:true, added: now()-7*24*60*60*1000},
+    {title:'Linear — Sprint Board', url:'https://linear.app/team/sprint', pinned:false, added: now()-3*24*60*60*1000},
+    {title:'Figma — Design System', url:'https://figma.com/file/design-system', pinned:true, added: now()-14*24*60*60*1000},
+    {title:'Stack Overflow — TypeError fix', url:'https://stackoverflow.com/q/123456', pinned:false, added: now()-5*24*60*60*1000},
+    {title:'Google Docs — Q3 Report', url:'https://docs.google.com/document/q3', pinned:false, added: now()-1*24*60*60*1000},
+    {title:'Reddit — r/programming', url:'https://reddit.com/r/programming', pinned:false, added: now()-10*24*60*60*1000},
+    {title:'YouTube — React Tutorial', url:'https://youtube.com/watch?v=abc', pinned:false, added: now()-2*24*60*60*1000},
+    {title:'Notion — Meeting Notes', url:'https://notion.so/meeting-notes', pinned:false, added: now()-30*60*1000},
+    {title:'Medium — Understanding LLMs', url:'https://medium.com/llms-explained', pinned:false, added: now()-6*24*60*60*1000},
+    {title:'OpenAI Docs — API Reference', url:'https://openai.com/docs/api', pinned:false, added: now()-45*60*1000},
+    {title:'Anthropic — Claude API', url:'https://anthropic.com/api', pinned:false, added: now()-20*60*1000},
+    {title:'Twitter — Trending', url:'https://twitter.com/explore', pinned:false, added: now()-8*24*60*60*1000},
+    {title:'Vercel Dashboard', url:'https://vercel.app/dashboard', pinned:true, added: now()-2*24*60*60*1000},
+    {title:'localhost:3000 — Dev Server', url:'http://localhost:3000', pinned:false, added: now()-15*60*1000},
+    {title:'Dev.to — Latest Articles', url:'https://dev.to', pinned:false, added: now()-4*24*60*60*1000},
+    {title:'Stack Overflow — CSS grid help', url:'https://stackoverflow.com/q/654321', pinned:false, added: now()-11*24*60*60*1000},
+    {title:'GitHub Issues — Bug #432', url:'https://github.com/your-org/project/issues/432', pinned:false, added: now()-3*24*60*60*1000},
+    {title:'Figma — Wireframes v3', url:'https://figma.com/file/wireframes', pinned:false, added: now()-5*24*60*60*1000},
+  ];
+
+  if (groups.length === 0) {
+    groups = [
+      {id: groupIdCounter++, name:'Work', color:'#6eb5ff'},
+      {id: groupIdCounter++, name:'Research', color:'#c07aff'},
+      {id: groupIdCounter++, name:'Dev', color:'#ffb55b'},
+    ];
+  }
+
+  tabs = sample.map((t,i) => ({
+    id: tabIdCounter++,
+    title: t.title,
+    url: t.url,
+    pinned: t.pinned,
+    added: t.added,
+    groupId: i < 6 ? groups[0].id : i < 12 ? groups[1].id : i < 15 ? groups[2].id : null
+  }));
+
+  render();
+  showToast('18 sample tabs loaded!', 'success');
+}
+
+function addTab(title, url, groupId) {
+  tabs.push({ id: tabIdCounter++, title, url, pinned: false, added: now(), groupId: groupId || null });
+  render();
+}
+
+function removeTab(id) {
+  tabs = tabs.filter(t => t.id !== id);
+  selectedTabs.delete(id);
+  render();
+}
+
+function togglePin(id) {
+  const t = tabs.find(t => t.id === id);
+  if (t) { t.pinned = !t.pinned; render(); }
+}
+
+function toggleSelect(id) {
+  if (selectedTabs.has(id)) selectedTabs.delete(id);
+  else selectedTabs.add(id);
+  render();
+}
+
+function clearSelection() { selectedTabs.clear(); render(); }
+
+function bulkClose() {
+  const n = selectedTabs.size;
+  tabs = tabs.filter(t => !selectedTabs.has(t.id));
+  selectedTabs.clear();
+  render();
+  showToast(`Closed ${n} tabs`, 'success');
+}
+
+function bulkPin() {
+  selectedTabs.forEach(id => {
+    const t = tabs.find(t => t.id === id);
+    if (t) t.pinned = true;
+  });
+  clearSelection();
+  showToast('Tabs pinned', 'info');
+}
+
+function bulkGroup() {
+  if (groups.length === 0) { showToast('Create a group first', 'info'); return; }
+  openMoveModal([...selectedTabs]);
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(el => {
+    el.classList.toggle('active', el.dataset.filter === f);
+  });
+  render();
+}
+
+function selectGroup(g) {
+  currentGroup = g;
+  document.querySelectorAll('.group-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.group == g);
+  });
+  render();
+}
+
+function getVisibleTabs() {
+  let list = [...tabs];
+  if (currentGroup === 'ungrouped') list = list.filter(t => !t.groupId);
+  else if (currentGroup !== 'all') list = list.filter(t => t.groupId == currentGroup);
+
+  const q = document.getElementById('searchInput')?.value.toLowerCase() || '';
+  if (q) list = list.filter(t => t.title.toLowerCase().includes(q) || t.url.toLowerCase().includes(q));
+
+  if (currentFilter === 'old') list = list.filter(t => isOld(t.added));
+  if (currentFilter === 'new') list = list.filter(t => isNew(t.added));
+  if (currentFilter === 'pinned') list = list.filter(t => t.pinned);
+
+  return list;
+}
+
+function render() {
+  const visibleTabs = getVisibleTabs();
+
+  // Header counter
+  const counter = document.getElementById('headerCounter');
+  counter.textContent = tabs.length + ' tabs';
+  counter.className = 'tab-counter' + (tabs.length > 20 ? ' danger' : '');
+
+  // Sidebar counts
+  document.getElementById('allCount').textContent = tabs.length;
+  document.getElementById('ungroupedCount').textContent = tabs.filter(t => !t.groupId).length;
+
+  // Group list in sidebar
+  const gl = document.getElementById('groupList');
+  gl.innerHTML = groups.map(g => `
+    <div class="group-item" data-group="${g.id}" onclick="selectGroup(${g.id})">
+      <div class="dot" style="background:${g.color}"></div>
+      <span class="g-name">${g.name}</span>
+      <span class="g-count">${tabs.filter(t=>t.groupId===g.id).length}</span>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('.group-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.group == currentGroup);
+  });
+
+  // Stats
+  const old = tabs.filter(t => isOld(t.added)).length;
+  const pinned = tabs.filter(t => t.pinned).length;
+  const grouped = tabs.filter(t => t.groupId).length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="val" style="color:var(--accent)">${tabs.length}</div><div class="lbl">Total tabs</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--warn)">${old}</div><div class="lbl">Old tabs (3d+)</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--purple)">${pinned}</div><div class="lbl">Pinned</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--blue)">${grouped}</div><div class="lbl">Grouped</div></div>
+  `;
+
+  // Bulk bar
+  const bb = document.getElementById('bulkBar');
+  bb.style.display = selectedTabs.size > 0 ? 'flex' : 'none';
+  document.getElementById('selCount').textContent = selectedTabs.size + ' selected';
+
+  // Main content
+  const mc = document.getElementById('mainContent');
+
+  if (visibleTabs.length === 0) {
+    mc.innerHTML = `<div class="empty-state"><div class="emoji">🎉</div><h3>Nothing here</h3><p>No tabs match your current filter.</p></div>`;
+    return;
+  }
+
+  if (currentGroup === 'all' && currentFilter === 'all' && !document.getElementById('searchInput')?.value) {
+    // Group by groups
+    let html = '';
+    const ungrouped = visibleTabs.filter(t => !t.groupId);
+    groups.forEach(g => {
+      const gTabs = visibleTabs.filter(t => t.groupId === g.id);
+      if (gTabs.length === 0) return;
+      html += `<div>
+        <div class="group-header">
+          <div class="dot-lg" style="background:${g.color}"></div>
+          <h2>${g.name}</h2>
+          <span style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted)">${gTabs.length} tabs</span>
+          <div class="g-actions">
+            <button class="btn" onclick="openGroupModal(${g.id})" style="font-size:0.72rem;padding:4px 10px">Edit</button>
+            <button class="btn danger-btn" onclick="closeGroupTabs(${g.id})" style="font-size:0.72rem;padding:4px 10px">Close all</button>
+          </div>
+        </div>
+        <div class="tabs-grid">${gTabs.map(tabCard).join('')}</div>
+      </div>`;
+    });
+    if (ungrouped.length > 0) {
+      html += `<div>
+        <div class="group-header">
+          <div class="dot-lg" style="background:#888"></div>
+          <h2>Ungrouped</h2>
+          <span style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--muted)">${ungrouped.length} tabs</span>
+        </div>
+        <div class="tabs-grid">${ungrouped.map(tabCard).join('')}</div>
+      </div>`;
+    }
+    mc.innerHTML = html;
+  } else {
+    mc.innerHTML = `<div class="tabs-grid">${visibleTabs.map(tabCard).join('')}</div>`;
+  }
+}
+
+function tabCard(t) {
+  const fc = faviconColor(t.url);
+  const fl = faviconLetter(t.url);
+  const sel = selectedTabs.has(t.id);
+  const g = groups.find(g => g.id === t.groupId);
+  const age = ageLabel(t.added);
+  const old = isOld(t.added);
+  const isNw = isNew(t.added);
+
+  return `<div class="tab-card${sel?' selected':''}" onclick="toggleSelect(${t.id})">
+    <div class="tab-top">
+      <div class="select-check"></div>
+      <div class="favicon" style="background:${fc}22;color:${fc}">${fl}</div>
+      <div class="tab-title">${t.title}</div>
+      <button class="close-btn" onclick="event.stopPropagation();removeTab(${t.id})">✕</button>
+    </div>
+    <div class="tab-url">${domainOf(t.url)}</div>
+    <div class="tab-meta">
+      ${t.pinned ? `<span class="tag pinned">Pinned</span>` : ''}
+      ${old ? `<span class="tag age-old">${age} old</span>` : isNw ? `<span class="tag age-new">New</span>` : `<span style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace">${age}</span>`}
+      ${g ? `<span class="tag group-tag">${g.name}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+function closeGroupTabs(gid) {
+  const n = tabs.filter(t => t.groupId === gid).length;
+  tabs = tabs.filter(t => t.groupId !== gid);
+  render();
+  showToast(`Closed ${n} tabs from group`, 'success');
+}
+
+// Modals
+function openModal(html) {
+  document.getElementById('modalBox').innerHTML = html;
+  document.getElementById('modalBackdrop').style.display = 'flex';
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modalBackdrop')) {
+    document.getElementById('modalBackdrop').style.display = 'none';
+  }
+}
+
+function openGroupModal(gid) {
+  const g = gid ? groups.find(x => x.id === gid) : null;
+  const colorDots = COLORS.map((c,i) => `<div class="color-dot${g && g.color===c?' selected-color':(!g&&i===0?' selected-color':'')}" style="background:${c}" onclick="document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('selected-color'));this.classList.add('selected-color');" data-color="${c}"></div>`).join('');
+  openModal(`
+    <h3>${g ? 'Edit group' : 'New group'}</h3>
+    <input type="text" id="gName" placeholder="Group name..." value="${g ? g.name : ''}" autofocus>
+    <div class="sidebar-label" style="margin:0">Color</div>
+    <div class="color-picker-row">${colorDots}</div>
+    <div class="modal-actions">
+      ${g ? `<button class="btn danger-btn" onclick="deleteGroup(${g.id})">Delete group</button>` : ''}
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="saveGroup(${gid || 'null'})">${g ? 'Save' : 'Create'}</button>
+    </div>
+  `);
+}
+
+function saveGroup(gid) {
+  const name = document.getElementById('gName').value.trim();
+  if (!name) return;
+  const color = document.querySelector('.color-dot.selected-color')?.dataset.color || COLORS[0];
+  if (gid) {
+    const g = groups.find(x => x.id === gid);
+    if (g) { g.name = name; g.color = color; }
+  } else {
+    groups.push({ id: groupIdCounter++, name, color });
+  }
+  closeModal();
+  render();
+  showToast(gid ? 'Group updated' : 'Group created', 'success');
+}
+
+function deleteGroup(gid) {
+  groups = groups.filter(g => g.id !== gid);
+  tabs.forEach(t => { if (t.groupId === gid) t.groupId = null; });
+  closeModal();
+  render();
+  showToast('Group deleted', 'info');
+}
+
+function openAddTabModal() {
+  const opts = groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+  openModal(`
+    <h3>Add tab</h3>
+    <input type="text" id="tTitle" placeholder="Title..." autofocus>
+    <input type="text" id="tUrl" placeholder="URL..." style="margin-top:8px">
+    ${opts ? `<select id="tGroup" style="margin-top:8px"><option value="">No group</option>${opts}</select>` : ''}
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="saveNewTab()">Add tab</button>
+    </div>
+  `);
+}
+
+function saveNewTab() {
+  const title = document.getElementById('tTitle').value.trim() || 'New Tab';
+  const url = document.getElementById('tUrl').value.trim() || 'https://example.com';
+  const groupEl = document.getElementById('tGroup');
+  const gid = groupEl ? (parseInt(groupEl.value) || null) : null;
+  addTab(title, url, gid);
+  closeModal();
+  showToast('Tab added', 'success');
+}
+
+function openMoveModal(ids) {
+  const opts = groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+  if (!opts) { showToast('No groups available', 'info'); return; }
+  openModal(`
+    <h3>Move ${ids.length} tabs to group</h3>
+    <select id="moveGroup"><option value="">Ungrouped</option>${opts}</select>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="confirmMove(${JSON.stringify(ids).replace(/"/g,'&quot;')})">Move</button>
+    </div>
+  `);
+}
+
+function confirmMove(ids) {
+  const gid = parseInt(document.getElementById('moveGroup').value) || null;
+  ids.forEach(id => { const t = tabs.find(t => t.id === id); if (t) t.groupId = gid; });
+  selectedTabs.clear();
+  closeModal();
+  render();
+  showToast('Tabs moved', 'success');
+}
+
+function showToast(msg, type='info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + type;
+  el.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2500);
+}
+
+render();
+</script>
+</body>
+</html>
